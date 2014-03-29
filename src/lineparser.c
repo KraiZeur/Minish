@@ -1,6 +1,6 @@
 /* ************************************************************ */
 /**
- * name   : file.c
+ * name   : lineparser.c
  * author : RITALY Thomas
  * date   : 2014-03-26
  *
@@ -8,16 +8,4 @@
  */
 /* ************************************************************ */
 
- void runProgram(char *buffer) {
- 	
-	char *separator = " ";
-	char *token, *saveptr;
-	token = strtok (buffer, separator, &saveptr);
-	
-	while (token != NULL) {
-	
-		token = strtok_r (NULL, separator, &saveptr);
-	
-	}
-
- }
+#include "lineparser.h"
