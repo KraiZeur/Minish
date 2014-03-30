@@ -37,6 +37,7 @@ int main (int argc, char  *argv []) {
 	}
 
 	logging (TRACE_INFO, "Closing the program");
+	closeLoggingFile ();
 
 	return 0;
 }

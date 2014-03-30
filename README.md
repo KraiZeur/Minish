@@ -1,4 +1,4 @@
 Minish
 ======
 
-little shell for unix operating system
+shell-like for unix operating system

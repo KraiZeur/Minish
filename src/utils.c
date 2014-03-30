@@ -3,5 +3,9 @@
 #include "utils.h"
 
 void removeCarriageReturn (char *buffer) {
-	buffer [strlen (buffer) - 1] = '\0';
+	
+	if (buffer [strlen (buffer) - 1] == '\n') {
+		buffer [strlen (buffer) - 1] = '\0';
+	}
+	
 }

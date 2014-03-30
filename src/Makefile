@@ -1,5 +1,4 @@
 CC = gcc -Wall
-LIB=-lpthread
 
 all: minish
 

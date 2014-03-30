@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "program.h"
+ #include "logging.h"
 
 void runProgram (char *buffer) {
  	
@@ -22,7 +23,7 @@ void runProgram (char *buffer) {
 	
 	while (token != NULL) {
 	
-		printf ("%s\n", token);
+		logging (TRACE_DEBUG, "\"%s\" a new token", token);
 		token = strtok_r (NULL, separator, &saveptr);
 	
 	}

@@ -25,30 +25,37 @@ void initLoggingFile (const char *path) {
  */
 void logging (const char *tag, const char *format, ...) {
 
-	time_t now;
-	time(&now);
+	if (logging_file != NULL) {
+		time_t now;
+		char buffer [512];
+		va_list args;
 
-	char *bufferTime = ctime(&now);
-	removeCarriageReturn (bufferTime);
-	
-	//bufferTime[strlen(bufferTime)-1] = '\0';
+		time(&now);
 
-	char buffer [512];
-	va_list args;
+		char *bufferTime = ctime(&now);
+		removeCarriageReturn (bufferTime);
 
-	va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
+		/* Format the args */
+		va_start(args, format);
+	    vsnprintf(buffer, sizeof(buffer), format, args);
+	    va_end(args);
 
-	fprintf (logging_file, "%s [%s]: %s\n", bufferTime, tag, buffer);
-	fflush (logging_file);
-	fsync (fileno (logging_file));
+		fprintf (logging_file, "%s [%s]: %s\n", bufferTime, tag, buffer);
+		fflush (logging_file);
+	}
+
 }
 
-void closeLoggingFile (const char *path) {
+/** 
+ * Close the logging file if the user doesn't have the right
+ * to open/write in the file do nothing 
+ */
+void closeLoggingFile () {
 
-	if ((fclose (logging_file)) == EOF) {
-		perror ("Close the logging file failed");
+	if (logging_file != NULL) {
+		if ((fclose (logging_file)) == EOF) {
+			perror ("Close the logging file failed");
+		}
 	}
 
 }
