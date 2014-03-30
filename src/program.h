@@ -1,1 +1,1 @@
-void runProgram (char *buffer);
+void runProgram ();

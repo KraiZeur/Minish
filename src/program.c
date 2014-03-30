@@ -10,22 +10,29 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "program.h"
- #include "logging.h"
+#include "logging.h"
+ #include "utils.h"
+#include "lineparser.h"
 
-void runProgram (char *buffer) {
+#define BUFFER_SIZE 512
+
+void runProgram () {
  	
-	char *separator = " \n";
-	char *token, *saveptr;
-	token = strtok_r (buffer, separator, &saveptr);
-	
-	while (token != NULL) {
-	
-		logging (TRACE_DEBUG, "\"%s\" a new token", token);
-		token = strtok_r (NULL, separator, &saveptr);
-	
+	char buffer [BUFFER_SIZE];
+
+	/* Read from stdin the user's commands */
+	while (fgets (buffer , BUFFER_SIZE , stdin) != NULL) {
+
+		removeCarriageReturn (buffer);
+		logging (TRACE_DEBUG, "\"%s\" is read from stdin", buffer);
+
+		parserLine (buffer);
+
 	}
+
+	
+	
 
 }
