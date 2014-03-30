@@ -18,12 +18,12 @@ void parserLine (char *buffer) {
 	char *separator = " \n";
 	char *token, *saveptr;
 	token = strtok_r (buffer, separator, &saveptr);
-	
+
 	while (token != NULL) {
-	
+
 		logging (TRACE_DEBUG, "\"%s\" a new token", token);
 		token = strtok_r (NULL, separator, &saveptr);
-	
+
 	}
 
 }
