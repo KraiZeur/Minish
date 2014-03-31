@@ -13,14 +13,27 @@
 
 #include "program.h"
 #include "logging.h"
- #include "utils.h"
+#include "utils.h"
 #include "lineparser.h"
 
 #define BUFFER_SIZE 512
 
+/** 
+ * Display the line containing the username and the current directory path
+ * user@user:path$ 
+ */
+void displayStandardLine () {
+	char *cwd = getWorkingDirectory ();
+	printf ("%s@%s:%s$ ", getenv ("USER"), getenv ("USER"), cwd);
+	free (cwd);
+	fflush (stdout);
+}
+
 void runProgram () {
  	
 	char buffer [BUFFER_SIZE];
+
+	displayStandardLine ();
 
 	/* Read from stdin the user's commands */
 	while (fgets (buffer , BUFFER_SIZE , stdin) != NULL) {
@@ -29,6 +42,8 @@ void runProgram () {
 		logging (TRACE_DEBUG, "\"%s\" is read from stdin", buffer);
 
 		parserLine (buffer);
+
+		displayStandardLine ();
 
 	}
 

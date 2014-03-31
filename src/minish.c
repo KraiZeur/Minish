@@ -14,27 +14,18 @@
 #include "logging.h"
 #include "utils.h"
 
-#define BUFFER_SIZE 512
-
 /** 
  * Main function of the program call the runProgram function to
  * start the program 
  */
 int main (int argc, char  *argv []) {
 
-	puts ("Welcome to minish");
+	puts ("Welcome to minish Version 1.0");
 	initLoggingFile ("log.txt");
 	logging (TRACE_INFO, "Starting the program");
 
-	char buffer [BUFFER_SIZE];
-
-	while (fgets (buffer , BUFFER_SIZE , stdin) != NULL) {
-
-		removeCarriageReturn (buffer);
-		logging (TRACE_DEBUG, "\"%s\" is read from stdin", buffer);
-		runProgram (buffer);
-
-	}
+	/* Run the program loop until Ctrl+D signal */
+	runProgram ();
 
 	logging (TRACE_INFO, "Closing the program");
 	closeLoggingFile ();
