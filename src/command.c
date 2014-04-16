@@ -10,9 +10,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "command.h"
 
+/** 
+ * Parse a line and create the Command associated 
+ */
 Command lineToCommand (char *line) {
 
 	Command cmd;
@@ -35,5 +39,14 @@ Command lineToCommand (char *line) {
 	cmd.nbr_args = argc;
 
 	return cmd;
+
+}
+
+/** 
+ * Execute the clear command 
+ */
+void clearCommand () {
+
+	system ("clear");
 
 }

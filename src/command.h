@@ -12,16 +12,17 @@ typedef struct {
 
 typedef struct {
 	char *command_name;
-	char *args[MAX_ARGS];
+	char *args [MAX_ARGS];
 	int nbr_args;
-	Redirection *redir[MAX_REDIR]; /* NULL When no redirection */
+	Redirection *redir [MAX_REDIR]; /* NULL When no redirection */
 } Command;
 
 typedef struct {
-	Command cmd_array[MAX_CMD];
+	Command cmd_array [MAX_CMD];
 	int nbr_pipes;
 } Line;
 
 Command lineToCommand (char *line);
+void clearCommand ();
 
 #endif /* COMMAND_H */

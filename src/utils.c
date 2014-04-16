@@ -4,6 +4,10 @@
 
 #include "utils.h"
 
+
+/** 
+ * Remove the last character if the character is \n 
+ */
 void removeCarriageReturn (char *buffer) {
 
 	if (buffer [strlen (buffer) - 1] == '\n') {

@@ -4,7 +4,7 @@
  * author : RITALY Thomas
  * date   : 2014-03-29
  *
- * description : Contains the main function to run the program
+ * description : 
  */
 /* ************************************************************ */
 
@@ -24,11 +24,20 @@
  */
 void displayStandardLine () {
 	char *cwd = getWorkingDirectory ();
-	printf ("%s@%s:%s$ ", getenv ("USER"), getenv ("USER"), cwd);
+	char *username = getenv ("USER");
+	if (username == NULL) 
+		printf ("\x1b[32mUSER:\x1b[0m%s$ ", cwd);
+	else 
+		printf ("\x1b[32m%s:\x1b[0m%s$ ", username, cwd);
+	
 	free (cwd);
 	fflush (stdout);
 }
 
+/** 
+ * Run the program display the standard line and take inputs
+ * from user  
+ */
 void runProgram () {
  	
 	char buffer [BUFFER_SIZE];
@@ -41,7 +50,7 @@ void runProgram () {
 		removeCarriageReturn (buffer);
 		logging (TRACE_DEBUG, "\"%s\" is read from stdin", buffer);
 
-		parserLine (buffer);
+		parseLine (buffer);
 
 		displayStandardLine ();
 

@@ -20,7 +20,7 @@
  */
 int main (int argc, char  *argv []) {
 
-	puts ("Welcome to minish Version 1.0");
+	puts ("\x1b[32m#################################################\n#         Welcome to minish Version 1.0         #\n#################################################\x1b[0m");
 	initLoggingFile ("log.txt");
 	logging (TRACE_INFO, "Starting the program");
 
