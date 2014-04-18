@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
 	Command cmd_array [MAX_CMD];
-	int nbr_pipes;
+	int nbr_command;
 } Line;
 
 Command lineToCommand (char *line);

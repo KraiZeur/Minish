@@ -14,10 +14,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 #include "lineparser.h"
 #include "logging.h"
-#include "command.h"
 #include "utils.h"
 
 #define BUFFER_SIZE 512
@@ -50,224 +52,245 @@ int getRedirectionType (char *redirection) {
  * 2 -> append to the file
  */
 /* writeToFile (redir.path, "te222222 APPEND\n", 2); */
-int writeToFile (char *path, char *message, int redirtype) {
+ int writeToFile (char *path, char *message, int redirtype) {
 
-	int desc, flags = 0;
+ 	int desc, flags = 0;
 
-	int current_out = dup (1);
+ 	int current_out = dup (1);
 
 	/* Check the redirType and associate the differents flags for the open function */
-	switch (redirtype) {
-		case 1 : flags = O_WRONLY | O_CREAT;
-			break;
-		case 2 : flags = O_APPEND | O_WRONLY | O_CREAT;
-			break;
-		default: flags = O_WRONLY | O_CREAT;
-			break;
-	}
+ 	switch (redirtype) {
+ 		case 1 : flags = O_WRONLY | O_CREAT;
+ 		break;
+ 		case 2 : flags = O_APPEND | O_WRONLY | O_CREAT;
+ 		break;
+ 		default: flags = O_WRONLY | O_CREAT;
+ 		break;
+ 	}
 
-	if ((desc = open (path, flags)) == -1) {
-		if (errno == EACCES){
-			fprintf (stderr, "minish: %s : Permission denied\n", path);
-		} else {
-			perror ("minish: error opening the file");
-		}
-		return -1;
-	}
+ 	if ((desc = open (path, flags)) == -1) {
+ 		if (errno == EACCES){
+ 			fprintf (stderr, "minish: %s : Permission denied\n", path);
+ 		} else {
+ 			perror ("minish: error opening the file");
+ 		}
+ 		return -1;
+ 	}
 
-	dup2 (desc, STDOUT_FILENO);
+ 	dup2 (desc, STDOUT_FILENO);
 
-	write (desc, message, strlen (message));
+ 	write (desc, message, strlen (message));
 
 	/* Then we reset the stdout and close the file descriptor */
-	if (dup2 (current_out, 1) < 0) {
-        fprintf (stderr, "couldn't reset output\n");
-        return 1;
-    }
+ 	if (dup2 (current_out, 1) < 0) {
+ 		fprintf (stderr, "couldn't reset output\n");
+ 		return 1;
+ 	}
 
-	if (close (desc) == -1) {
-		perror ("close error");
-		return -1;
-	}
+ 	if (close (desc) == -1) {
+ 		perror ("close error");
+ 		return -1;
+ 	}
 
-	return 0;
+ 	return 0;
 
-}
+ }
 
 
 /** 
  * Return NULL if no redir 
  */
-Redirection *parseRedirection (char *token, char *separator, char **saveptr) {
+ Redirection *parseRedirection (char *token, char *separator, char **saveptr) {
 
-	Redirection *redir = NULL;
+ 	Redirection *redir = NULL;
 
-	switch (getRedirectionType (token)) {
+ 	switch (getRedirectionType (token)) {
 
-		case REDIR_OUT_TOFILE : redir = malloc (sizeof (Redirection));
+ 		case REDIR_OUT_TOFILE : redir = malloc (sizeof (Redirection));
 
-			redir->redirection_type = ">";
-			token = strtok_r (NULL, separator, saveptr);
+ 		redir->redirection_type = ">";
+ 		token = strtok_r (NULL, separator, saveptr);
 
-			if (token == NULL) {
-				puts ("minish: syntax error near unexpected token `newline'");
-				free (redir);
-				return NULL;
-			} else {
-				redir->path = strdup (token);
-				printf ("> Path : %s\n", redir->path);
-			}
+ 		if (token == NULL) {
+ 			puts ("minish: syntax error near unexpected token `newline'");
+ 			free (redir);
+ 			return NULL;
+ 		} else {
+ 			redir->path = strdup (token);
+ 			printf ("> Path : %s\n", redir->path);
+ 		}
 
-			break;
-		case REDIR_OUT_TOFILE_ADD : redir = malloc (sizeof (Redirection));
+ 		break;
+ 		case REDIR_OUT_TOFILE_ADD : redir = malloc (sizeof (Redirection));
 
-			redir->redirection_type = ">>";
-			token = strtok_r (NULL, separator, saveptr);
+ 		redir->redirection_type = ">>";
+ 		token = strtok_r (NULL, separator, saveptr);
 
-			if (token == NULL) {
-				puts ("minish: syntax error near unexpected token `newline'");
-				free (redir);
-				return NULL;
-			} else {
-				redir->path = strdup (token);
-				printf (">> Path : %s\n", redir->path);
-			}
+ 		if (token == NULL) {
+ 			puts ("minish: syntax error near unexpected token `newline'");
+ 			free (redir);
+ 			return NULL;
+ 		} else {
+ 			redir->path = strdup (token);
+ 			printf (">> Path : %s\n", redir->path);
+ 		}
 
-			break;
-		case REDIR_ERR_TOFILE : redir = malloc (sizeof (Redirection));
+ 		break;
+ 		case REDIR_ERR_TOFILE : redir = malloc (sizeof (Redirection));
 
-			redir->redirection_type = "2>";
-			token = strtok_r (NULL, separator, saveptr);
+ 		redir->redirection_type = "2>";
+ 		token = strtok_r (NULL, separator, saveptr);
 
-			if (token == NULL) {
-				puts ("minish: syntax error near unexpected token `newline'");
-				free (redir);
-				return NULL;
-			} else {
-				redir->path = strdup (token);
-				printf ("2> Path : %s\n", redir->path);
-			}
+ 		if (token == NULL) {
+ 			puts ("minish: syntax error near unexpected token `newline'");
+ 			free (redir);
+ 			return NULL;
+ 		} else {
+ 			redir->path = strdup (token);
+ 			printf ("2> Path : %s\n", redir->path);
+ 		}
 
-			break;
-		case REDIR_ERR_TOFILE_ADD : redir = malloc (sizeof (Redirection));
+ 		break;
+ 		case REDIR_ERR_TOFILE_ADD : redir = malloc (sizeof (Redirection));
 
-			redir->redirection_type = "2>>";
-			token = strtok_r (NULL, separator, saveptr);
+ 		redir->redirection_type = "2>>";
+ 		token = strtok_r (NULL, separator, saveptr);
 
-			if (token == NULL) {
-				puts ("minish: syntax error near unexpected token `newline'");
-				free (redir);
-				return NULL;
-			} else {
-				redir->path = strdup (token);
-				printf ("2>> Path : %s\n", redir->path);
-			}
+ 		if (token == NULL) {
+ 			puts ("minish: syntax error near unexpected token `newline'");
+ 			free (redir);
+ 			return NULL;
+ 		} else {
+ 			redir->path = strdup (token);
+ 			printf ("2>> Path : %s\n", redir->path);
+ 		}
 
-			break;
-		case REDIR_IN : redir = malloc (sizeof (Redirection));
+ 		break;
+ 		case REDIR_IN : redir = malloc (sizeof (Redirection));
 
-			redir->redirection_type = ">";
-			token = strtok_r (NULL, separator, saveptr);
+ 		redir->redirection_type = ">";
+ 		token = strtok_r (NULL, separator, saveptr);
 
-			if (token == NULL) {
-				puts ("minish: syntax error near unexpected token `newline'");
-				free (redir);
-				return NULL;
-			} else {
-				redir->path = strdup (token);
-				printf ("2>> Path : %s\n", redir->path);
-			}
+ 		if (token == NULL) {
+ 			puts ("minish: syntax error near unexpected token `newline'");
+ 			free (redir);
+ 			return NULL;
+ 		} else {
+ 			redir->path = strdup (token);
+ 			printf ("2>> Path : %s\n", redir->path);
+ 		}
 
-			break;
+ 		break;
 		default: /* Do nothing */
-			break;
+ 		break;
 
-	}
+ 	}
 
-	return redir;
+ 	return redir;
 
-}
+ }
 
 
 /** 
  * Display the history to the stdout 
  */
-void historyCommand () {
+ void historyCommand () {
 
-	int i = 0;
+ 	int i = 0;
 
-	for (i = 0; i < number_input_history; i++) {
-		printf (" %d %s\n", i, history [i]);
-	}
+ 	for (i = 0; i < number_input_history; i++) {
+ 		printf (" %d %s\n", i, history [i]);
+ 	}
 
-}
+ }
 
 /** 
  * Add an element to the history 
- * Every elements of the history need to be free 
  */
-void addToHistory (char *str) {
+ void addToHistory (char *str) {
 
-	/* TODO desalocate HISTORY */
-	history [number_input_history] = malloc (sizeof (strlen (str)));
-	strcpy (history [number_input_history], str);
-	number_input_history++;
+ 	history [number_input_history] = strdup (str);
+ 	number_input_history++;
 
-}
+ }
 
 /** 
  * Execute the cd command by using the chdir function
- * if a HOME environnement variable exists ~ (tilde) for
- * home directory is allowed 
+ * if a HOME environnement variable exists ~ (tilde) to
+ * home directory is managed
  */
-void cdCommand (char *command) {
+ void cdCommand (char *command) {
 
 	if (command == NULL) { /* No paramter so home directory */
 
-		char homeDir [125];
+ 	char homeDir [125];
 
 		/* Check that the variable HOME exists */
-		if ( getenv ("HOME") != NULL) {
-			strcpy (homeDir, getenv ("HOME"));
+ 	if ( getenv ("HOME") != NULL) {
+ 		strcpy (homeDir, getenv ("HOME"));
 
-			if (chdir (homeDir) == -1) 
-				fprintf (stderr, "minish: cd: %s: %s\n", homeDir, strerror (errno));
-		}
+ 		if (chdir (homeDir) == -1) 
+ 			fprintf (stderr, "minish: cd: %s: %s\n", homeDir, strerror (errno));
+ 	}
 
 	} else if (command [0] == '~') { /* Manage the home directory */
 
-		char homeDir [125];
-		char buffer [512];
+ 	char homeDir [125];
+ 	char buffer [512];
 
 		/* Check that the variable HOME exists */
-		if ( getenv ("HOME") != NULL) {
-			strcpy (homeDir, getenv ("HOME"));
+ 	if ( getenv ("HOME") != NULL) {
+ 		strcpy (homeDir, getenv ("HOME"));
 
 			/* Remove the ~ by getting the next char */
-			command = command+1;
+ 		command = command+1;
 
 			/* Add the home path to the user's input path */
-			sprintf (buffer, "%s%s", homeDir, command);
+ 		sprintf (buffer, "%s%s", homeDir, command);
 
-			if (chdir (buffer) == -1) 
-				fprintf (stderr, "minish: cd: %s: %s\n", buffer, strerror (errno));
-		}
+ 		if (chdir (buffer) == -1) 
+ 			fprintf (stderr, "minish: cd: %s: %s\n", buffer, strerror (errno));
+ 	}
 
 	} else { /* We move from the user input */
 
-		if (chdir (command) == -1)
-			fprintf (stderr, "minish: cd: %s: %s\n", command, strerror (errno));
-	}
-	
+ 	if (chdir (command) == -1)
+ 		fprintf (stderr, "minish: cd: %s: %s\n", command, strerror (errno));
+ }
+
 }
 
 void exitCommand () {
 	exit (EXIT_SUCCESS);
 }
 
-void parseLine (char *buffer) {
+int notImplementedCommand (char *token) {
 
-	/* SEGFAULT ON EMPTY STRING */
+	if (strcmp (token, "alias") == 0) {
+		return 1;
+	} else if (strcmp (token, "bind") == 0) {
+		return 1;
+	} else if (strcmp (token, "builtin") == 0) {
+		return 1;
+	} else if (strcmp (token, "caller") == 0) { 
+		return 1;
+	} else if (strcmp (token, "command") == 0) { 
+		return 1;
+	} else if (strcmp (token, "declare") == 0) { 
+		return 1;
+	} else if (strcmp (token, "echo") == 0) { 
+		return 1;
+	} else if (strcmp (token, "enable") == 0) { 
+		return 1;
+	} else if (strcmp (token, "help") == 0) { 
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
+
+void parseLine (char *buffer) {
 
 	addToHistory (buffer);
 
@@ -278,7 +301,7 @@ void parseLine (char *buffer) {
 	/* TODO CLEAN */
 	if (token == NULL) {
 		/* Empty  to avoid segmentation fault when nothing is entered */
-	} else if (strncmp (token, "cd", 2) == 0) {
+	} else if (strcmp (token, "cd") == 0) {
 
 		token = strtok_r (NULL, separator, &saveptr);
 		cdCommand (token);
@@ -295,19 +318,22 @@ void parseLine (char *buffer) {
 
 		exitCommand ();
 
+	} else if (notImplementedCommand (token) == 1) {
+
+		printf ("%s : not implemented\n", token);
+
 	} else { /* MODIFYYYYYY */
 
-		// line -> command -> redirection
+		parseShellCommandLine (token, saveptr, separator);
+		
+	}
+}
+
+void parseShellCommandLine (char *token, char *saveptr, char *separator) {
+			// line -> command -> redirection
 
 		Line userLine;
-		userLine.nbr_pipes = 0;
-
-
-		int args_number = 0;
-		/* Fill the struct with the first args -> the command name */
-		Command cmd;
-		cmd.command_name = token;
-		cmd.args [args_number] = token;
+		userLine.nbr_command = 0;
 
 		/** 
 		 * EXEMPLE
@@ -315,25 +341,78 @@ void parseLine (char *buffer) {
 		 * ls 
 		 * 
 		 */
+		 while (token != NULL) {
 
-		while (token != NULL) {
+			if (strcmp (token, "|") == 0 || userLine.nbr_command == 0) { /* if pipe */
 
-			/* If != NULL you must free redir */
-			Redirection *redir = parseRedirection (token, separator, &saveptr);
+		 		if (strcmp (token, "|") == 0) { /* If it's a pipe we take the next arg as the command name */
+		 			token = strtok_r (NULL, separator, &saveptr);
+		 		}
 
-			*(cmd.redir) = redir; // first element of the array of redir
+				/* Fill the struct with the first args -> the command name */
+			 	Command cmd;
+			 	cmd.nbr_args = 0;
+			 	cmd.command_name = token;
 
-			if (redir != NULL) {
-				printf ("type : %s path : %s\n", (*cmd.redir)->redirection_type, (*cmd.redir)->path);
+			 	cmd.args [cmd.nbr_args++] = token;
+				/* Store the command in the line */
+		 		userLine.cmd_array [userLine.nbr_command++] = cmd;
+
+			} else {
+
+				/* If != NULL you must free redir */
+		 		Redirection *redir = parseRedirection (token, separator, &saveptr);
+
+				*(userLine.cmd_array [userLine.nbr_command-1].redir) = redir; // first element of the array of redir
+
+				if (redir != NULL) {
+					printf ("type : %s path : %s\n", (*userLine.cmd_array [userLine.nbr_command-1].redir)->redirection_type, (*userLine.cmd_array[userLine.nbr_command-1].redir)->path);
+				} else { /* No redirection flag we store the command flag */
+					userLine.cmd_array [userLine.nbr_command-1].args [userLine.cmd_array[userLine.nbr_command-1].nbr_args++] = token;
+				}
+
 			}
 
+			//puts (token);
 			token = strtok_r (NULL, separator, &saveptr);
 
 		}
 
-		// each time a pipe is found create a new cmd
-		*(userLine.cmd_array) = cmd; // first array element takes the first cmd
+		if (executeUserLine (userLine) == -1) {
+			fprintf (stderr, "%s\n", "error when executing the user line");
+			exit (EXIT_FAILURE);
+		}
+}
 
-	}
+int executeUserLine (Line line) {
+	int   pp [2];
+	pid_t pid;
+	int   fd_in = 0;
+	int cur_cmd_nbr = 0;
 
+  	while (cur_cmd_nbr < line.nbr_command) {
+      	if (pipe (pp) == -1) {
+       		perror ("pipe failed");
+       		return -1;
+     	}
+
+      	switch (pid = fork()) {
+      		case -1 : perror ("fork failed");
+      			return -1;
+      			break;
+			case 0 : /* child */
+				dup2 (fd_in, 0);
+				if (cur_cmd_nbr+1 != line.nbr_command) /* If the current command is not the last we duplicate the stdin in the pipe1 */
+					dup2 (pp [1], 1);
+			  	close (pp [0]);
+			  	execvp (line.cmd_array [cur_cmd_nbr].command_name, line.cmd_array [cur_cmd_nbr].args);
+			  	printf ("%s : command not found\n", line.cmd_array [cur_cmd_nbr].command_name);
+				break;
+			default : /* father */
+				wait (NULL);
+				close (pp [1]);
+				fd_in = pp [0]; 
+				cur_cmd_nbr++;
+		}
+    }
 }
